@@ -1,0 +1,180 @@
+// Schema adaptado a SQLite para la demo local.
+// En producción (Postgres/Supabase) los campos String de estado pasan a enums
+// y los campos JSON-string (images, aiTags) a String[] — ver schema original
+// en el Documento de Arquitectura, sección 4.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// --- CORE & AUTH ---
+
+model User {
+  id            String   @id @default(cuid())
+  name          String?
+  email         String?  @unique
+  password      String?
+  role          String   @default("VENDOR") // ADMIN | VENDOR | AFFILIATE | CUSTOMER
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  tenants       TenantUser[]
+  affiliateCode String?  @unique
+  referredSales Order[]  @relation("AffiliateOrders")
+}
+
+model Tenant {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  logo        String?
+  description String?
+  plan        String   @default("BASIC") // BASIC | PRO | ENTERPRISE
+  aiCredits   Int      @default(100)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  users        TenantUser[]
+  products     Product[]
+  orders       Order[]
+  integrations Integration[]
+  campaigns    Campaign[]
+  liveStreams  LiveStream[]
+}
+
+model TenantUser {
+  id       String @id @default(cuid())
+  userId   String
+  tenantId String
+  user     User   @relation(fields: [userId], references: [id])
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
+
+  @@unique([userId, tenantId])
+}
+
+// --- CATÁLOGO & IA ---
+
+model Product {
+  id             String   @id @default(cuid())
+  tenantId       String
+  title          String
+  description    String?
+  basePrice      Float
+  suggestedPrice Float?
+  stock          Int      @default(0)
+  images         String   @default("[]") // JSON array de URLs
+  sku            String?
+  aiScore        Int?
+  aiTags         String   @default("[]") // JSON array de tags
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  tenant        Tenant         @relation(fields: [tenantId], references: [id])
+  orderItems    OrderItem[]
+  externalSyncs ExternalSync[]
+  reviews       Review[]
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  productId String
+  rating    Int
+  comment   String?
+  source    String   @default("MARKETPLACE")
+  sentiment String? // POSITIVE | NEUTRAL | NEGATIVE
+  createdAt DateTime @default(now())
+  product   Product  @relation(fields: [productId], references: [id])
+}
+
+// --- OMNICANALIDAD & INTEGRACIONES ---
+
+model Integration {
+  id           String    @id @default(cuid())
+  tenantId     String
+  platform     String // MARKETPLACE | MERCADOLIBRE | FALABELLA | EXITO | META | WHATSAPP
+  accessToken  String?
+  refreshToken String?
+  expiresAt    DateTime?
+  sellerId     String?
+  isActive     Boolean   @default(true)
+  settings     String?
+  tenant       Tenant    @relation(fields: [tenantId], references: [id])
+
+  @@unique([tenantId, platform])
+}
+
+model ExternalSync {
+  id            String    @id @default(cuid())
+  productId     String
+  platform      String
+  externalId    String?
+  externalTitle String?
+  externalDesc  String?
+  status        String    @default("PENDING") // PENDING | SYNCED | FAILED
+  lastSync      DateTime?
+  product       Product   @relation(fields: [productId], references: [id])
+
+  @@unique([productId, platform])
+}
+
+// --- ÓRDENES, LOGÍSTICA & AFILIADOS ---
+
+model Order {
+  id            String @id @default(cuid())
+  tenantId      String
+  customerName  String
+  customerEmail String
+  customerPhone String?
+  total         Float
+  status        String @default("PENDING") // PENDING | PAID | PROCESSING | SHIPPED | DELIVERED | CANCELLED
+  source        String @default("MARKETPLACE")
+
+  isDropshipping   Boolean @default(false)
+  shippingProvider String?
+  trackingNumber   String?
+
+  affiliateId    String?
+  affiliate      User?   @relation("AffiliateOrders", fields: [affiliateId], references: [id])
+  commissionPaid Boolean @default(false)
+
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  tenant    Tenant      @relation(fields: [tenantId], references: [id])
+  items     OrderItem[]
+}
+
+model OrderItem {
+  id        String  @id @default(cuid())
+  orderId   String
+  productId String
+  quantity  Int
+  price     Float
+  order     Order   @relation(fields: [orderId], references: [id])
+  product   Product @relation(fields: [productId], references: [id])
+}
+
+// --- MARKETING & LIVE SHOPPING ---
+
+model Campaign {
+  id          String   @id @default(cuid())
+  tenantId    String
+  name        String
+  type        String // DISCOUNT | ADS | SOCIAL_POSTS
+  aiGenerated Boolean  @default(true)
+  status      String   @default("DRAFT")
+  startDate   DateTime
+  endDate     DateTime
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+}
+
+model LiveStream {
+  id           String   @id @default(cuid())
+  tenantId     String
+  title        String
+  streamUrl    String?
+  status       String   @default("SCHEDULED") // SCHEDULED | LIVE | ENDED
+  scheduledFor DateTime
+  tenant       Tenant   @relation(fields: [tenantId], references: [id])
+}
