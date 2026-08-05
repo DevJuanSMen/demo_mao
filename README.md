@@ -4,7 +4,37 @@ MVP demo de la plataforma descrita en el *Documento de Arquitectura y Prompts*
 (carpeta raíz). **"Sube una foto y nosotros hacemos el resto. Vendemos tu
 producto en todas partes."**
 
-## Arrancar la demo
+## Requisitos
+
+- **Node.js 22.6 o superior** (el seed ejecuta TypeScript directamente con
+  `node`; desarrollado con Node 26). Verificar con `node --version`.
+- **Git** con acceso al repositorio.
+
+No hace falta instalar ninguna base de datos: la demo usa SQLite en un
+archivo local.
+
+## Clonar y correr la demo
+
+```bash
+git clone https://github.com/DevJuanSMen/demo_mao.git
+cd demo_mao
+```
+
+Crear el archivo `.env` en la raíz del proyecto (no viene en el repo):
+
+```env
+# Base de datos (SQLite para demo local)
+DATABASE_URL="file:./dev.db"
+
+# Secreto para firmar la cookie de sesión de la demo
+AUTH_SECRET="mao-demo-secret-cambiar-en-produccion"
+
+# IA — si se define, el AI Listing Generator llama a la API real.
+# Si está vacío, usa el modo simulado (mock) integrado.
+OPENAI_API_KEY=""
+```
+
+Instalar dependencias y arrancar:
 
 ```bash
 npm install
@@ -12,6 +42,9 @@ npm run demo   # crea la DB (SQLite), carga datos demo y levanta el servidor
 ```
 
 Abrir **http://localhost:3000**
+
+> `npm run demo` hace todo en un paso. Para arranques posteriores basta con
+> `npm run dev` (la DB ya queda creada).
 
 | Acceso | Credenciales |
 |---|---|
