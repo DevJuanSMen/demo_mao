@@ -22,6 +22,7 @@ export async function placeOrderAction(
   const address = String(formData.get("address") ?? "").trim();
   const city = String(formData.get("city") ?? "").trim();
   const quantity = Math.max(1, Math.floor(Number(formData.get("quantity") ?? 1)));
+  const refCode = String(formData.get("ref") ?? "").trim().toUpperCase();
 
   if (!name || !email || !phone || !address || !city) {
     return { error: "Completa todos los datos para el envío." };
@@ -39,6 +40,16 @@ export async function placeOrderAction(
   const total = product.basePrice * quantity;
   const shippingAddress = `${address}, ${city}`;
 
+  // Atribución de afiliado: si el pedido llegó con ?ref=CODIGO válido,
+  // la venta queda registrada a nombre de ese afiliado (comisión del 10%).
+  let affiliateId: string | null = null;
+  if (refCode) {
+    const affiliate = await prisma.user.findUnique({
+      where: { affiliateCode: refCode },
+    });
+    if (affiliate) affiliateId = affiliate.id;
+  }
+
   const order = await prisma.order.create({
     data: {
       tenantId: product.tenantId,
@@ -49,6 +60,7 @@ export async function placeOrderAction(
       status: "PENDING",
       source: "MARKETPLACE",
       shippingAddress,
+      affiliateId,
       items: {
         create: { productId: product.id, quantity, price: product.basePrice },
       },

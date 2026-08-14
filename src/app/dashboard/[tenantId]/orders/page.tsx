@@ -1,5 +1,10 @@
 import { prisma } from "@/lib/prisma";
-import { formatCOP, ORDER_STATUS_LABELS, PLATFORM_LABELS } from "@/lib/constants";
+import {
+  formatCOP,
+  ORDER_STATUS_LABELS,
+  ORDER_STATUS_STYLES,
+  PLATFORM_LABELS,
+} from "@/lib/constants";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -9,17 +14,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Truck } from "lucide-react";
+import { Truck, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-const STATUS_STYLES: Record<string, string> = {
-  PENDING: "bg-neutral-100 text-neutral-600",
-  PAID: "bg-blue-100 text-blue-700",
-  PROCESSING: "bg-amber-100 text-amber-700",
-  SHIPPED: "bg-violet-100 text-violet-700",
-  DELIVERED: "bg-emerald-100 text-emerald-700",
-  CANCELLED: "bg-red-100 text-red-700",
-};
+import { OrderRow } from "./order-row";
 
 export default async function OrdersPage({
   params,
@@ -38,7 +35,8 @@ export default async function OrdersPage({
       <div>
         <h1 className="text-2xl font-bold">Órdenes</h1>
         <p className="text-sm text-neutral-500">
-          {orders.length} órdenes de todos tus canales de venta
+          {orders.length} órdenes de todos tus canales de venta — haz clic en una
+          para ver el detalle
         </p>
       </div>
 
@@ -53,11 +51,12 @@ export default async function OrdersPage({
               <TableHead>Total</TableHead>
               <TableHead>Estado</TableHead>
               <TableHead>Fecha</TableHead>
+              <TableHead className="w-8" />
             </TableRow>
           </TableHeader>
           <TableBody>
             {orders.map((o) => (
-              <TableRow key={o.id}>
+              <OrderRow key={o.id} href={`/dashboard/${tenantId}/orders/${o.id}`}>
                 <TableCell>
                   <p className="font-medium">{o.customerName}</p>
                   <p className="text-xs text-neutral-500">{o.customerEmail}</p>
@@ -96,7 +95,7 @@ export default async function OrdersPage({
                   <span
                     className={cn(
                       "rounded-full px-2.5 py-0.5 text-xs font-medium",
-                      STATUS_STYLES[o.status]
+                      ORDER_STATUS_STYLES[o.status]
                     )}
                   >
                     {ORDER_STATUS_LABELS[o.status] ?? o.status}
@@ -108,7 +107,10 @@ export default async function OrdersPage({
                     month: "short",
                   })}
                 </TableCell>
-              </TableRow>
+                <TableCell>
+                  <ChevronRight className="h-4 w-4 text-neutral-300" />
+                </TableCell>
+              </OrderRow>
             ))}
           </TableBody>
         </Table>

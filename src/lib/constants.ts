@@ -26,6 +26,26 @@ export const ORDER_STATUS_LABELS: Record<string, string> = {
   CANCELLED: "Cancelada",
 };
 
+export const ORDER_STATUS_STYLES: Record<string, string> = {
+  PENDING: "bg-neutral-100 text-neutral-600",
+  PAID: "bg-blue-100 text-blue-700",
+  PROCESSING: "bg-amber-100 text-amber-700",
+  SHIPPED: "bg-violet-100 text-violet-700",
+  DELIVERED: "bg-emerald-100 text-emerald-700",
+  CANCELLED: "bg-red-100 text-red-700",
+};
+
+// Flujo natural de una orden: siguiente estado sugerido
+export const ORDER_NEXT_STATUS: Record<string, string | undefined> = {
+  PENDING: "PAID",
+  PAID: "PROCESSING",
+  PROCESSING: "SHIPPED",
+  SHIPPED: "DELIVERED",
+};
+
+// Comisión que gana un afiliado por venta referida
+export const AFFILIATE_COMMISSION_RATE = 0.1;
+
 export const PLAN_LABELS: Record<string, string> = {
   BASIC: "Básico",
   PRO: "Pro",

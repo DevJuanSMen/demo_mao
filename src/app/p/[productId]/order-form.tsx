@@ -22,12 +22,14 @@ export function OrderForm({
   price,
   stock,
   brandName,
+  refCode,
 }: {
   productId: string;
   productTitle: string;
   price: number;
   stock: number;
   brandName: string;
+  refCode?: string;
 }) {
   const [state, formAction, pending] = useActionState(
     placeOrderAction.bind(null, productId),
@@ -88,6 +90,7 @@ export function OrderForm({
               </DialogDescription>
             </DialogHeader>
             <form action={formAction} className="space-y-3">
+              {refCode && <input type="hidden" name="ref" value={refCode} />}
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <Label htmlFor="quantity">Cantidad</Label>

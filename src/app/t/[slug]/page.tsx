@@ -25,8 +25,15 @@ export async function generateMetadata({
   };
 }
 
-export default async function StorePage({ params }: PageProps<"/t/[slug]">) {
+export default async function StorePage({
+  params,
+  searchParams,
+}: PageProps<"/t/[slug]">) {
   const { slug } = await params;
+  // Código de afiliado (?ref=CODIGO): se propaga a los links de producto
+  // para atribuir la venta al afiliado que compartió la tienda.
+  const sp = await searchParams;
+  const ref = typeof sp.ref === "string" ? sp.ref : undefined;
   const tenant = await prisma.tenant.findUnique({
     where: { slug },
     include: {
@@ -123,7 +130,7 @@ export default async function StorePage({ params }: PageProps<"/t/[slug]">) {
               return (
                 <Link
                   key={p.id}
-                  href={`/p/${p.id}`}
+                  href={ref ? `/p/${p.id}?ref=${encodeURIComponent(ref)}` : `/p/${p.id}`}
                   className="group overflow-hidden rounded-xl border bg-white transition-shadow hover:shadow-lg"
                 >
                   <div className="relative aspect-square overflow-hidden bg-neutral-100">

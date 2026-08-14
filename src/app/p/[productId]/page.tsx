@@ -9,8 +9,13 @@ import { Separator } from "@/components/ui/separator";
 import { OrderForm } from "./order-form";
 import { ArrowLeft, Sparkles, Truck, ShieldCheck, MessageCircle } from "lucide-react";
 
-export default async function ProductPage({ params }: PageProps<"/p/[productId]">) {
+export default async function ProductPage({
+  params,
+  searchParams,
+}: PageProps<"/p/[productId]">) {
   const { productId } = await params;
+  const sp = await searchParams;
+  const refCode = typeof sp.ref === "string" ? sp.ref : undefined;
   const product = await prisma.product.findUnique({
     where: { id: productId },
     include: {
@@ -108,6 +113,7 @@ export default async function ProductPage({ params }: PageProps<"/p/[productId]"
                 price={product.basePrice}
                 stock={product.stock}
                 brandName={product.tenant.name}
+                refCode={refCode}
               />
               {whatsappAskUrl && (
                 <Button size="lg" variant="outline" asChild>
