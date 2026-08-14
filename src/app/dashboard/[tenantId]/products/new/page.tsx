@@ -3,6 +3,7 @@
 import { use, useActionState, useState } from "react";
 import Image from "next/image";
 import { generateListingAction, saveProductAction, type GenerateState } from "../actions";
+import { AI_SOURCE_LABELS } from "@/lib/ai/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -124,7 +125,7 @@ export default function NewProductPage({
               {listing && (
                 <Badge className="bg-violet-100 text-violet-700 hover:bg-violet-100">
                   <Sparkles className="mr-1 h-3 w-3" />
-                  {listing.source === "openai" ? "GPT-4o" : "IA (modo demo)"}
+                  {AI_SOURCE_LABELS[listing.source]}
                 </Badge>
               )}
             </CardTitle>

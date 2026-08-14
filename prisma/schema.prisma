@@ -134,6 +134,7 @@ model Order {
   isDropshipping   Boolean @default(false)
   shippingProvider String?
   trackingNumber   String?
+  shippingAddress  String?
 
   affiliateId    String?
   affiliate      User?   @relation("AffiliateOrders", fields: [affiliateId], references: [id])

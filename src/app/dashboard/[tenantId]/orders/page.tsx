@@ -61,6 +61,9 @@ export default async function OrdersPage({
                 <TableCell>
                   <p className="font-medium">{o.customerName}</p>
                   <p className="text-xs text-neutral-500">{o.customerEmail}</p>
+                  {o.shippingAddress && (
+                    <p className="text-xs text-neutral-400">📍 {o.shippingAddress}</p>
+                  )}
                 </TableCell>
                 <TableCell className="max-w-56">
                   <p className="line-clamp-2 text-sm text-neutral-600">

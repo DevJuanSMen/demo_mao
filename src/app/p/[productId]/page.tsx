@@ -6,7 +6,8 @@ import { formatCOP, parseJsonArray, PLATFORM_LABELS } from "@/lib/constants";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, ShoppingCart, Sparkles, Truck, ShieldCheck } from "lucide-react";
+import { OrderForm } from "./order-form";
+import { ArrowLeft, Sparkles, Truck, ShieldCheck, MessageCircle } from "lucide-react";
 
 export default async function ProductPage({ params }: PageProps<"/p/[productId]">) {
   const { productId } = await params;
@@ -19,6 +20,18 @@ export default async function ProductPage({ params }: PageProps<"/p/[productId]"
     },
   });
   if (!product) notFound();
+
+  const whatsapp = await prisma.integration.findUnique({
+    where: {
+      tenantId_platform: { tenantId: product.tenantId, platform: "WHATSAPP" },
+    },
+  });
+  const whatsappAskUrl =
+    whatsapp?.isActive && whatsapp.sellerId
+      ? `https://wa.me/${whatsapp.sellerId}?text=${encodeURIComponent(
+          `Hola ${product.tenant.name} 👋 Me interesa "${product.title}" que vi en tu tienda MAO. ¿Me das más información?`
+        )}`
+      : null;
 
   const images = parseJsonArray(product.images);
   const tags = parseJsonArray(product.aiTags);
@@ -56,7 +69,13 @@ export default async function ProductPage({ params }: PageProps<"/p/[productId]"
 
           <div>
             <p className="text-sm text-neutral-500">
-              Vendido por <span className="font-medium text-neutral-900">{product.tenant.name}</span>
+              Vendido por{" "}
+              <Link
+                href={`/t/${product.tenant.slug}`}
+                className="font-medium text-neutral-900 underline-offset-2 hover:text-violet-700 hover:underline"
+              >
+                {product.tenant.name}
+              </Link>
             </p>
             <h1 className="mt-1 text-2xl font-bold leading-tight">{product.title}</h1>
 
@@ -83,12 +102,20 @@ export default async function ProductPage({ params }: PageProps<"/p/[productId]"
             </div>
 
             <div className="mt-6 flex gap-3">
-              <Button size="lg" className="flex-1 bg-violet-600 hover:bg-violet-700">
-                <ShoppingCart className="mr-2 h-4 w-4" /> Agregar al carrito
-              </Button>
-              <Button size="lg" variant="outline">
-                Comprar por WhatsApp
-              </Button>
+              <OrderForm
+                productId={product.id}
+                productTitle={product.title}
+                price={product.basePrice}
+                stock={product.stock}
+                brandName={product.tenant.name}
+              />
+              {whatsappAskUrl && (
+                <Button size="lg" variant="outline" asChild>
+                  <a href={whatsappAskUrl} target="_blank" rel="noopener">
+                    <MessageCircle className="mr-2 h-4 w-4" /> Preguntar por WhatsApp
+                  </a>
+                </Button>
+              )}
             </div>
 
             <div className="mt-6 grid grid-cols-2 gap-3 text-sm text-neutral-600">

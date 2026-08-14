@@ -29,8 +29,10 @@ DATABASE_URL="file:./dev.db"
 # Secreto para firmar la cookie de sesión de la demo
 AUTH_SECRET="mao-demo-secret-cambiar-en-produccion"
 
-# IA — si se define, el AI Listing Generator llama a la API real.
-# Si está vacío, usa el modo simulado (mock) integrado.
+# IA de texto — si se define alguna, el AI Listing Generator y el Social
+# Designer llaman a la API real. Si están vacías, usan el modo simulado.
+# Groq tiene prioridad sobre OpenAI.
+GROQ_API_KEY=""
 OPENAI_API_KEY=""
 ```
 
@@ -75,21 +77,42 @@ Abrir **http://localhost:3000**
    alertas rojas si se agota en menos de 7 días.
 9. **Analytics** — take rate de la plataforma, ventas por canal, ventas por
    afiliados y análisis de sentimiento de reseñas con resumen de la IA.
-10. Las demás secciones (AI Hub, Afiliados, Live Shopping, Social Designer)
-    muestran el roadmap por fases — útiles para cerrar con la visión.
+10. **Compartir la tienda** — botón "Compartir" en el header del dashboard:
+    copia el link público de la marca (`/t/andina`), estilo tienda Shopify,
+    con solo los productos de ese vendedor.
+11. **Compra sin pasarela** — desde la tienda compartida, cualquier visitante
+    entra a un producto, hace el pedido (datos + dirección) y al confirmar:
+    la orden aparece en Órdenes del dashboard (con la dirección) y el
+    comprador salta a WhatsApp con el detalle del pedido para coordinar el
+    pago. El número se configura en Configuración → Pedidos por WhatsApp.
+12. **Social Designer** — elegir producto, formato (post/story/ad) y tono;
+    la IA genera 3 variaciones de copy con hashtags y CTA, y la vista previa
+    compone el post sobre la foto del producto con 3 plantillas visuales.
+13. Las demás secciones (AI Hub, Afiliados, Live Shopping) muestran el
+    roadmap por fases — útiles para cerrar con la visión.
 
 También se puede mostrar el **onboarding B2B** (`/register`): crear una marca
 nueva con selección de plan en menos de un minuto.
 
 ## IA real vs simulada
 
-Sin configuración, el generador usa un **mock convincente** (sin dependencias
-externas — imposible que falle en vivo). Para usar GPT-4o real, poner la key
-en `.env`:
+Sin configuración, los generadores usan un **mock convincente** (sin
+dependencias externas — imposible que falle en vivo). Para usar IA real,
+poner una key en `.env` (Groq tiene prioridad si están ambas):
 
 ```env
-OPENAI_API_KEY="sk-..."
+GROQ_API_KEY="gsk_..."    # Llama 3.3 70B vía Groq (rápido y gratis para demos)
+OPENAI_API_KEY="sk-..."   # GPT-4o
 ```
+
+Aplica al **AI Listing Generator** y al **Social Designer**. Groq no ofrece
+generación de imágenes (solo texto y visión), por eso las piezas visuales del
+Social Designer se componen con plantillas propias sobre la foto del producto.
+
+> El retoque de fotos con IA quedó implementado pero deshabilitado
+> (`src/lib/ai/image.ts`): el endpoint gratuito de NVIDIA solo acepta sus
+> imágenes de ejemplo y el free tier de Gemini no incluye cuota del modelo de
+> imagen. Se reconecta cuando haya proveedor con tier utilizable.
 
 ## Decisiones tomadas para la demo (vs producción)
 

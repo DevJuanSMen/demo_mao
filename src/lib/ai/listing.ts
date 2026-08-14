@@ -1,14 +1,16 @@
 // AI Listing Generator (Fase 2): genera título SEO, descripción persuasiva
 // y tags a partir de un nombre básico de producto.
-// Si OPENAI_API_KEY está configurada llama a la API real (GPT-4o);
-// si no, usa un generador simulado para la demo.
+// Con GROQ_API_KEY u OPENAI_API_KEY llama a la API real (ver lib/ai/client);
+// si no hay ninguna, usa un generador simulado para la demo.
+
+import { chatJSON } from "./client";
 
 export type GeneratedListing = {
   title: string;
   description: string;
   tags: string[];
   suggestedPrice: number;
-  source: "openai" | "mock";
+  source: "groq" | "openai" | "mock";
 };
 
 export async function generateListing(
@@ -16,56 +18,29 @@ export async function generateListing(
   basePrice: number,
   category?: string
 ): Promise<GeneratedListing> {
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (apiKey) {
-    try {
-      return await generateWithOpenAI(apiKey, basicName, basePrice, category);
-    } catch (error) {
-      console.error("Fallo la llamada a OpenAI, usando mock:", error);
+  try {
+    const result = await chatJSON<{
+      title: string;
+      description: string;
+      tags?: string[];
+      suggestedPrice?: number;
+    }>(
+      "Eres un experto en e-commerce latinoamericano. Generas listings de alta conversión en español. Respondes solo JSON con las claves: title (título SEO de 40-70 caracteres), description (descripción persuasiva de 3 párrafos), tags (array de 5 strings), suggestedPrice (número en COP).",
+      `Producto: "${basicName}". Precio base: ${basePrice} COP.${category ? ` Categoría: ${category}.` : ""} Genera el listing optimizado.`
+    );
+    if (result) {
+      return {
+        title: result.data.title,
+        description: result.data.description,
+        tags: result.data.tags ?? [],
+        suggestedPrice: result.data.suggestedPrice ?? Math.round(basePrice * 1.15),
+        source: result.source,
+      };
     }
+  } catch (error) {
+    console.error("Fallo la llamada a la IA, usando mock:", error);
   }
   return generateMock(basicName, basePrice);
-}
-
-async function generateWithOpenAI(
-  apiKey: string,
-  basicName: string,
-  basePrice: number,
-  category?: string
-): Promise<GeneratedListing> {
-  const res = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model: "gpt-4o",
-      response_format: { type: "json_object" },
-      messages: [
-        {
-          role: "system",
-          content:
-            "Eres un experto en e-commerce latinoamericano. Generas listings de alta conversión en español. Respondes solo JSON con las claves: title (título SEO de 40-70 caracteres), description (descripción persuasiva de 3 párrafos), tags (array de 5 strings), suggestedPrice (número en COP).",
-        },
-        {
-          role: "user",
-          content: `Producto: "${basicName}". Precio base: ${basePrice} COP.${category ? ` Categoría: ${category}.` : ""} Genera el listing optimizado.`,
-        },
-      ],
-    }),
-  });
-
-  if (!res.ok) throw new Error(`OpenAI respondió ${res.status}`);
-  const data = await res.json();
-  const parsed = JSON.parse(data.choices[0].message.content);
-  return {
-    title: parsed.title,
-    description: parsed.description,
-    tags: parsed.tags ?? [],
-    suggestedPrice: parsed.suggestedPrice ?? Math.round(basePrice * 1.15),
-    source: "openai",
-  };
 }
 
 // --- Generador simulado (demo sin API key) ---

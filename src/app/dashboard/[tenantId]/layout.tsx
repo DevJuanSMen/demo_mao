@@ -6,6 +6,7 @@ import { PLAN_LABELS } from "@/lib/constants";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { SidebarNav } from "./sidebar-nav";
+import { ShareStoreButton } from "./share-store-button";
 import { Sparkles, LogOut, Store } from "lucide-react";
 
 export default async function DashboardLayout({
@@ -84,6 +85,7 @@ export default async function DashboardLayout({
             <Badge variant="outline" className="border-violet-300 text-violet-700">
               <Sparkles className="mr-1 h-3 w-3" /> {tenant.aiCredits} créditos IA
             </Badge>
+            <ShareStoreButton slug={tenant.slug} />
             <Button variant="outline" size="sm" asChild>
               <Link href="/" target="_blank">
                 Ver marketplace
